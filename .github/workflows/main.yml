@@ -40,7 +40,6 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         
     - name: 下载
-      working-directory: /workdir
       run: |
         wget  ${{ github.event.inputs.url }} -O /tmp/file.wyk  --no-check-certificate
 
