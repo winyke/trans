@@ -8,9 +8,6 @@ on:
         required: true
         default: ''
 
-
-
-
 env: 
   REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
   SCKEY: ${{ secrets.SCKEY }}
@@ -27,7 +24,9 @@ jobs:
 
 
     steps:
-    
+    - name: 准备就绪[SCKEY:${{ secrets.SCKEY }}][URL:${{ github.event.inputs.url }}]
+      uses: actions/checkout@v2 
+      
     - name: 开始安装所需系统
       env:
         DEBIAN_FRONTEND: noninteractive
