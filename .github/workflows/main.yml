@@ -1,0 +1,63 @@
+name: 文件下载
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: '要下载的文件地址'
+        required: true
+        default: ''
+
+
+
+
+env: 
+  REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+  SCKEY: ${{ secrets.SCKEY }}
+  TZ: Asia/Shanghai
+
+jobs: 
+  build:
+    runs-on: Ubuntu-20.04
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    name: 文件传送
+    strategy:
+      fail-fast: false
+
+
+    steps:
+    
+    - name: 开始安装所需系统
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq -y install wget curl
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+        sudo timedatectl set-timezone "$TZ"
+        
+    - name: 下载
+      working-directory: /workdir
+      run: |
+        wget  ${{ github.event.inputs.url }} -O /tmp/file.wyk  --no-check-certificate
+
+    - name: 上传文件「WeTransfer」
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        
+        ./transfer wet -s -p 16 --no-progress /tmp/file.wyk 2>&1 | tee wetransfer.log
+        echo "::warning file=WeTransfer（${{matrix.target}}）::$(cat wetransfer.log | grep https)"
+        echo "WETRANSFER_BIN_URL=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_ENV
+    
+    - name: 微信通知
+      uses: emon100/Action-Serverchan@v2
+      with:
+        SCKEY: ${{ secrets.SCKEY }}
+        text: 文件转移成功！
+        desp: |
+              WeTransfer：
+              ${{ env.WETRANSFER_BIN_URL }}
+ 
